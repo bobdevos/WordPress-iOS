@@ -144,6 +144,12 @@
 				else
 					[self.navigationController popViewControllerAnimated:YES];
 				break;
+			case 2:
+				[[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaCursor" object:_media];
+				if(IS_IPAD)
+                    [self dismissViewControllerAnimated:YES completion:nil];
+				else
+					[self.navigationController popViewControllerAnimated:YES];
 			default:
 				break;
 		}
@@ -185,7 +191,7 @@
 																   delegate:self 
 														  cancelButtonTitle:NSLocalizedString(@"Cancel", @"") 
 													 destructiveButtonTitle:nil
-														  otherButtonTitles:NSLocalizedString(@"Above Content", @""), NSLocalizedString(@"Below Content", @""), nil];
+														  otherButtonTitles:NSLocalizedString(@"Above Content", @""), NSLocalizedString(@"Below Content", @""), NSLocalizedString(@"Cursor", @""),  nil];
     if (IS_IPAD) {
         [insertActionSheet showFromBarButtonItem:_insertButton animated:YES];
     } else {

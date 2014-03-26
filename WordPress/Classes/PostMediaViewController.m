@@ -279,7 +279,7 @@
                 DDLogWarn(@"Media deleted while uploading (%@)", media);
                 return;
             }
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaBelow" object:media];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaCursor" object:media];
             [media save];
         } failure:^(NSError *error) {
             // User canceled upload
@@ -1276,7 +1276,7 @@
             return;
         }
         if (!isPickingFeaturedImage) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaBelow" object:imageMedia];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaCursor" object:imageMedia];
         }
         [imageMedia save];
     } failure:^(NSError *error) {
@@ -1365,7 +1365,7 @@
                 DDLogWarn(@"Media deleted while uploading (%@)", videoMedia);
                 return;
             }
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaBelow" object:videoMedia];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaCursor" object:videoMedia];
             [videoMedia save];
         } failure:^(NSError *error) {
             [WPError showNetworkingAlertWithError:error title:NSLocalizedString(@"Upload failed", @"")];
@@ -1399,7 +1399,7 @@
         DDLogWarn(@"Media deleted while uploading (%@)", media);
         return;
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaBelow" object:media];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ShouldInsertMediaCursor" object:media];
 	self.isAddingMedia = NO;
 }
 

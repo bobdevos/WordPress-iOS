@@ -119,7 +119,7 @@
         self.moreButton = [WPKeyboardToolbarButtonItem button];
         [_moreButton setImageName:@"icon_format_more" withColor:nil highlightColor:highlightColor];
         _moreButton.frame = CGRectMake(x, 0, width, height);
-        _moreButton.actionTag = @"more";
+        _moreButton.actionTag = @"image";
         _moreButton.accessibilityIdentifier = @"more";
         _moreButton.actionName = NSLocalizedString(@"more", @"Adding a More excerpt cut-off in the Post Editor. This string will be used in the Undo message if the last change was adding this formatting.");
         _moreButton.accessibilityLabel = NSLocalizedString(@"more", nil);

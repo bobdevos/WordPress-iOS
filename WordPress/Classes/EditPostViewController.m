@@ -28,7 +28,9 @@ CGFloat const EPVCTextViewOffset = 10.0;
 CGFloat const EPVCTextViewBottomPadding = 50.0f;
 CGFloat const EPVCTextViewTopPadding = 7.0f;
 
-@interface EditPostViewController ()<UIPopoverControllerDelegate>
+@interface EditPostViewController ()<UIPopoverControllerDelegate> {
+	NSRange			_lastCursorPosition;
+}
 
 @property (nonatomic, strong) UIButton *titleBarButton;
 @property (nonatomic, strong) WPAlertView *linkHelperAlertView;
@@ -145,6 +147,8 @@ CGFloat const EPVCTextViewTopPadding = 7.0f;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertMediaAbove:) name:@"ShouldInsertMediaAbove" object:nil];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertMediaBelow:) name:@"ShouldInsertMediaBelow" object:nil];
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(insertMediaCursor:) name:@"ShouldInsertMediaCursor" object:nil];
+	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(removeMedia:) name:@"ShouldRemoveMedia" object:nil];
     
     if (self.editorOpenedBy) {
@@ -153,6 +157,8 @@ CGFloat const EPVCTextViewTopPadding = 7.0f;
         [WPMobileStats trackEventForWPCom:[self formattedStatEventString:StatsEventPostDetailOpenedEditor]];
     }
     
+	_lastCursorPosition.location = NSNotFound;
+	
     [self geotagNewPost];
 }
 
@@ -1158,6 +1164,51 @@ CGFloat const EPVCTextViewTopPadding = 7.0f;
     [self.post save];
 }
 
+- (void)insertMediaCursor:(NSNotification*)notification {
+    [WPMobileStats trackEventForWPCom:[self formattedStatEventString:StatsEventPostDetailAddedPhoto]];
+	NSRange range = _lastCursorPosition;
+	if (range.location == NSNotFound) {
+		range.location = 0;
+	}
+	Media *media = (Media *)[notification object];
+	NSString *prefix = @"<br /><br />";
+	
+	if(self.post.content == nil || [self.post.content isEqualToString:@""]) {
+		self.post.content = @"";
+		prefix = @"";
+	}
+	
+	NSMutableString *content = [[NSMutableString alloc] initWithString:self.post.content];
+	NSRange imgHTML = [content rangeOfString: media.html];
+	NSRange imgHTMLPre = [content rangeOfString:[NSString stringWithFormat:@"%@%@", @"<br /><br />", media.html]];
+ 	NSRange imgHTMLPost = [content rangeOfString:[NSString stringWithFormat:@"%@%@", media.html, @"<br /><br />"]];
+	
+	if (imgHTMLPre.location == NSNotFound && imgHTMLPost.location == NSNotFound && imgHTML.location == NSNotFound) {
+//		[content appendString:[NSString stringWithFormat:@"%@%@", prefix, media.html]];
+		
+		NSString* replacement = [NSString stringWithFormat:@"\n<br/>\n%@\n<br/>\n", media.html];
+		[content replaceCharactersInRange:range withString:replacement];
+        self.post.content = content;
+	}
+	else {
+		if (imgHTMLPre.location != NSNotFound)
+			[content replaceCharactersInRange:imgHTMLPre withString:@""];
+		else if (imgHTMLPost.location != NSNotFound)
+			[content replaceCharactersInRange:imgHTMLPost withString:@""];
+		else
+			[content replaceCharactersInRange:imgHTML withString:@""];
+//		[content appendString:[NSString stringWithFormat:@"<br /><br />%@", media.html]];
+		NSString* replacement = [NSString stringWithFormat:@"\n<br/>\n%@\n<br/>\n", media.html];
+		[content replaceCharactersInRange:range withString:replacement];
+
+		self.post.content = content;
+	}
+    
+    [self refreshUIForCurrentPost];
+    [self.post save];
+
+}
+
 - (void)removeMedia:(NSNotification *)notification {
     [WPMobileStats trackEventForWPCom:[self formattedStatEventString:StatsEventPostDetailRemovedPhoto]];
     
@@ -1205,10 +1256,14 @@ CGFloat const EPVCTextViewTopPadding = 7.0f;
     } else if ([tag isEqualToString:@"blockquote"]) {
         prefix = [NSString stringWithFormat:@"\n<%@>", tag];
         suffix = [NSString stringWithFormat:@"</%@>\n", tag];
+    } else if ([tag isEqualToString:@"image"]) {
+		_lastCursorPosition = [_textView selectedRange];
+		[self showMediaOptions];
+		return;
     } else {
         prefix = [NSString stringWithFormat:@"<%@>", tag];
         suffix = [NSString stringWithFormat:@"</%@>", tag];
-    }
+	}
     _textView.scrollEnabled = NO;
     NSString *replacement = [NSString stringWithFormat:@"%@%@%@",prefix,selection,suffix];
     _textView.text = [_textView.text stringByReplacingCharactersInRange:range
